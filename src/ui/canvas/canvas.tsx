@@ -4,7 +4,7 @@ import styles from './canvas.module.css'
 
 export function Canvas() {
   const canvasElementRef = useRef<null | HTMLCanvasElement>(null)
-  const {message, randomSymbol, handleClearClick, handleCheckClick} = useCanvasController({canvasElementRef})
+  const {isLoading, message, randomSymbol, handleClearClick, handleCheckClick} = useCanvasController({canvasElementRef})
   const symbolBackgroundImageUrl = randomSymbol ? `url(/images/${randomSymbol}.svg` : 'null'
 
   return (
@@ -22,7 +22,7 @@ export function Canvas() {
 
       <div>
         <button onClick={handleClearClick} type="button">Clear</button>
-        <button onClick={handleCheckClick} type="button">Check</button>
+        <button disabled={isLoading} onClick={handleCheckClick} type="button">Check</button>
       </div>
       
       {message != '' && (<p>{message}</p>)}

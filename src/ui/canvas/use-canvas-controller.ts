@@ -15,6 +15,7 @@ interface useCanvasControllerProps {
 export function useCanvasController({ canvasElementRef }: useCanvasControllerProps) {
   const [symbolIndex, setSymbolIndex] = useState<null | number>(null)
   const [message, setMessage] = useState<string>('')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const handleClearClick = () => {
     setMessage('')
@@ -22,9 +23,11 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
   }
 
   const handleCheckClick = async () => {
+    setIsLoading(true)
+
     const canvas: null | HTMLCanvasElement = canvasElementRef.current;
     const hasPaths = Paper.project.activeLayer.children.length
-
+    
     if(!hasPaths) {
       setMessage('Start drawing the symbol and then check it out')
     }
@@ -41,6 +44,8 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
     
       const canvasDataUrl = canvas.toDataURL('image/jpeg')
       Paper.project.activeLayer.removeChildren();
+
+      setMessage('Checking...')
 
       const response = await fetch('/api/file', {
         method: 'POST',
@@ -72,6 +77,8 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
         setMessage('Nice try but it looks different')
       }
     }
+
+    setIsLoading(false)
   }
 
   useEffect(() => {
@@ -128,6 +135,7 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
   }, [canvasElementRef, lineColor])
 
   return {
+    isLoading,
     message,
     randomSymbol: symbolIndex !== null ? symbols[symbolIndex] : null,
     handleClearClick,
