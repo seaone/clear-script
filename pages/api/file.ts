@@ -21,7 +21,7 @@ export default async function handler(
   const [image1, image2] = imagesToTensors(uploadedImageBuffer, originalImageBuffer)
   
   try {
-    const model = await tf.loadLayersModel('file:///Users/eugene.sanzhiev/Documents/clear-script/siamese_network/model.json');
+    const model = await tf.loadLayersModel(`file://${process.cwd()}/siamese_network/model.json`);
     const prediction = model.predict([image1, image2]) as Tensor
 
     const [result] = await prediction.flatten().array()
