@@ -8,6 +8,13 @@ const symbols = [
   'o_init',
 ]
 
+const canvasSettings = {
+  canvasWidth: 400,
+  canvasHeight: 400,
+  strokeWidth: 12,
+  lineColor: '#000',
+}
+
 interface useCanvasControllerProps {
   canvasElementRef: MutableRefObject<HTMLCanvasElement | null>
 }
@@ -16,6 +23,7 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
   const [symbolIndex, setSymbolIndex] = useState<null | number>(null)
   const [message, setMessage] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const { canvasWidth, canvasHeight, strokeWidth, lineColor } = canvasSettings
 
   const handleClearClick = () => {
     setMessage('')
@@ -28,7 +36,7 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
     const canvas: null | HTMLCanvasElement = canvasElementRef.current;
     const hasPaths = Paper.project.activeLayer.children.length
     
-    if(!hasPaths) {
+    if (!hasPaths) {
       setMessage('Start drawing the symbol and then check it out')
     }
 
@@ -47,34 +55,38 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
 
       setMessage('Checking...')
 
-      const response = await fetch('/api/file', {
-        method: 'POST',
-        body: JSON.stringify({
-          file: {
-            base64: canvasDataUrl,
-            fileName: symbolIndex !== null ? symbols[symbolIndex] : null,
-          }
+      try {
+        const response = await fetch('/api/file', {
+          method: 'POST',
+          body: JSON.stringify({
+            file: {
+              base64: canvasDataUrl,
+              fileName: symbolIndex !== null ? symbols[symbolIndex] : null,
+            }
+          })
         })
-      })
 
-      const json = await response.json()
-      const { result } = json
+        const json = await response.json()
+        const { result } = json
 
-      if (result > 0.95) {
-        setSymbolIndex((prev) => {
-          if (prev == null) {
-            return 0
-          }
+        if (result > 0.975) {
+          setSymbolIndex((prev) => {
+            if (prev == null) {
+              return 0
+            }
 
-          if (prev + 1 > symbols.length-1) {
-            return 0
-          }
+            if (prev + 1 > symbols.length-1) {
+              return 0
+            }
 
-          return prev + 1
-        })
-        setMessage('Perfect!')
-      } else {
-        setMessage('Nice try but it looks different')
+            return prev + 1
+          })
+          setMessage('Perfect!')
+        } else {
+          setMessage('Nice try but it looks different')
+        }
+      } catch (e) {
+        setMessage('Something went wrong')
       }
     }
 
@@ -86,12 +98,6 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
       setSymbolIndex(getRandomInt(0, symbols.length-1))
     }
   }, [symbolIndex])
-
-
-  const strokeWidth = 12
-  const canvasWidth = 400
-  const canvasHeight = 400 
-  const lineColor = '#000'
 
   useEffect(() => {
     const canvas: null | HTMLCanvasElement = canvasElementRef.current;
@@ -122,7 +128,7 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
       }
 
       Paper.view.onMouseUp = (event: paper.MouseEvent) => {
-        var segmentCount = path.segments.length;
+        const segmentCount = path.segments.length;
         
         if (segmentCount == 0) {
           const myCircle = new Paper.Path.Circle(event.point, strokeWidth/2);
@@ -132,7 +138,7 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
         }
       }
     }
-  }, [canvasElementRef, lineColor])
+  }, [canvasElementRef, canvasHeight, canvasWidth, lineColor, strokeWidth])
 
   return {
     isLoading,
