@@ -5,7 +5,7 @@ import * as tf from '@tensorflow/tfjs-node'
 import { Tensor } from '@tensorflow/tfjs-node'
 
 type Data = {
-  result: number | string
+  result: number
 }
 
 export default async function handler(
@@ -16,28 +16,27 @@ export default async function handler(
   const json = JSON.parse(body)
 
   const fileContents = json.file.base64.replace(/^data:image\/jpeg;base64,/, "");
-  const uploadedImageBuffer = Buffer.from(fileContents, 'base64');
+  let uploadedImageBuffer = Buffer.from(fileContents, 'base64');
   const originalImageBuffer = fs.readFileSync(`./public/original/${json.file.fileName}.png`);
   const [image1, image2] = imagesToTensors(uploadedImageBuffer, originalImageBuffer)
   
   try {
-    const model = await tf.loadLayersModel(`file://${process.cwd()}/siamese-network/model.json`);
+    const model = await tf.loadLayersModel(`file://${process.cwd()}/siamese_network/model.json`);
     const prediction = model.predict([image1, image2]) as Tensor
 
     const [result] = await prediction.flatten().array()
 
-    // if (result > 0.975) {
-    //   storeBase64ImageInFile(json.file)
-    // }
+    if (result > 0.95) {
+      base64ToFile(json.file)
+    }
 
     res.status(200).json({ result: result })
   } catch(error) {
     console.error(error);
-    res.status(500).json({ result: 'server error' })
   }
 }
 
-function storeBase64ImageInFile(file: { base64: string, fileName: string }) {
+function base64ToFile(file: { base64: string, fileName: string }) {
   const fileContents = file.base64.replace(/^data:image\/jpeg;base64,/, "");
 
   fs.mkdirSync(`./public/uploads/${file.fileName}`, { recursive: true });
@@ -50,6 +49,7 @@ function storeBase64ImageInFile(file: { base64: string, fileName: string }) {
     }
   });
 }
+
 
 function imagesToTensors(imageBufferA: Buffer, imageBufferB: Buffer) {
   return [imageBufferA, imageBufferB].map((buffer) => {
