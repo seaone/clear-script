@@ -1,11 +1,25 @@
-import { MutableRefObject, useEffect, useState } from "react";
+import { MutableRefObject, useEffect, useMemo, useState } from "react";
 import Paper from 'paper'
 
-const symbols = [
-  'a_init',
-  'e_init',
-  'i_init',
-  'o_init',
+const enum symbolPosition {
+  initial= 'initial',
+  medial = 'medial',
+  final = 'final',
+}
+
+const symbolsMap = new Map([
+  ['a_init', { symbol: 'ᠠ‍', translit: 'a', position: symbolPosition.initial}],
+  ['e_init', { symbol: 'ᡄ‍', translit: 'e', position: symbolPosition.initial}],
+  ['i_init', { symbol: 'ᡅ‍', translit: 'i', position: symbolPosition.initial}],
+  ['o_init', { symbol: 'ᡆ‍', translit: 'o', position: symbolPosition.initial}],
+])
+
+export const phrase = [
+  'Start drawing the symbol and then check it out',
+  'Checking...',
+  'Perfect!',
+  'Nice try, draw the same symbol as in the picture',
+  'Something went wrong',
 ]
 
 interface useCanvasControllerProps {
@@ -13,12 +27,12 @@ interface useCanvasControllerProps {
 }
 
 export function useCanvasController({ canvasElementRef }: useCanvasControllerProps) {
-  const [symbolIndex, setSymbolIndex] = useState<null | number>(null)
-  const [message, setMessage] = useState<string>('')
+  const symbolEntries = Array.from(symbolsMap.entries())
+  const [symbolIndex, setSymbolIndex] = useState<null | number>(0)
+  const [message, setMessage] = useState<string>(phrase[0])
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const handleClearClick = () => {
-    setMessage('')
     Paper.project.activeLayer.removeChildren();
   }
 
@@ -28,7 +42,7 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
     const canvas: null | HTMLCanvasElement = canvasElementRef.current;
     const hasPaths = Paper.project.activeLayer.children.length
     
-    if(!hasPaths) {
+    if (!hasPaths) {
       setMessage('Start drawing the symbol and then check it out')
     }
 
@@ -45,14 +59,15 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
       const canvasDataUrl = canvas.toDataURL('image/jpeg')
       Paper.project.activeLayer.removeChildren();
 
-      setMessage('Checking...')
+      setMessage(phrase[1])
 
+      try {
       const response = await fetch('/api/file', {
         method: 'POST',
         body: JSON.stringify({
           file: {
             base64: canvasDataUrl,
-            fileName: symbolIndex !== null ? symbols[symbolIndex] : null,
+            fileName: symbolIndex !== null ? symbolEntries[symbolIndex][0] : null,
           }
         })
       })
@@ -62,35 +77,39 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
 
       if (result > 0.95) {
         setSymbolIndex((prev) => {
-          if (prev == null) {
+          if ((prev == null) || (prev == symbolEntries.length-1)) {
             return 0
           }
 
-          if (prev + 1 > symbols.length-1) {
-            return 0
-          }
-
-          return prev + 1
-        })
-        setMessage('Perfect!')
-      } else {
-        setMessage('Nice try but it looks different')
+            return prev + 1
+          })
+          setMessage(phrase[2])
+        } else {
+          setMessage(phrase[3])
+        }
+      } catch (e) {
+        setMessage(phrase[4])
       }
+    } else {
+      setMessage(phrase[0])
     }
 
     setIsLoading(false)
   }
 
   useEffect(() => {
-    if (symbolIndex == null) {
-      setSymbolIndex(getRandomInt(0, symbols.length-1))
-    }
-  }, [symbolIndex])
+    const timer = setTimeout(() => {
+      if (message === phrase[2] || message === phrase[3])
+      setMessage('')
+    }, 3000)
+
+    return () => clearTimeout(timer);
+  }, [message])
 
 
   const strokeWidth = 12
   const canvasWidth = 400
-  const canvasHeight = 400 
+  const canvasHeight = 400
   const lineColor = '#000'
 
   useEffect(() => {
@@ -137,15 +156,10 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
   return {
     isLoading,
     message,
-    randomSymbol: symbolIndex !== null ? symbols[symbolIndex] : null,
+    randomSymbol: symbolIndex !== null ? symbolEntries[symbolIndex] : null,
     handleClearClick,
     handleCheckClick
   }
-}
-
-function getRandomInt(min: number, max: number) {
-  let rand = min + Math.random() * (max + 1 - min);
-  return Math.floor(rand);
 }
 
 function invertImageData(imageData: ImageData): ImageData {
