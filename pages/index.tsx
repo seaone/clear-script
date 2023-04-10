@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import Image from 'next/image'
+
 import { Canvas } from '../src/ui/canvas/canvas'
 import styles from '../styles/Home.module.css'
 
@@ -8,13 +8,17 @@ export default function Home() {
     <div className={styles.container}>
       <Head>
         <title>Clear Script</title>
-        <meta name="description" content="Clear Script: Learn Clear Script" />
-        <link rel="icon" href="/favicon.ico" />
+
+        <meta content="Clear Script: Learn Clear Script" name="description" />
+
+        <link href="/favicon.ico" rel="icon" />
       </Head>
 
       <main>
-        <h1>Clear Script</h1>
+        <h1>Clear Script (Todo-Bichig)</h1>
+
         <hr />
+
         <Canvas />
       </main>  
     </div>
