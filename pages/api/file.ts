@@ -26,7 +26,7 @@ export default async function handler(
 
     const [result] = await prediction.flatten().array()
 
-    // if (result > 0.95) {
+    // if (result > 0.975) {
     //   base64ToFile(json.file)
     // }
 

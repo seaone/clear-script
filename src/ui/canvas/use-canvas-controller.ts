@@ -9,9 +9,11 @@ const enum symbolPosition {
 
 const symbolsMap = new Map([
   ['a_init', { symbol: 'ᠠ‍', translit: 'a', position: symbolPosition.initial }],
+  ['a_med', { symbol: '‍ᠠ‍', translit: 'a', position: symbolPosition.medial }],
   ['e_init', { symbol: 'ᡄ‍', translit: 'e', position: symbolPosition.initial }],
   ['i_init', { symbol: 'ᡅ‍', translit: 'i', position: symbolPosition.initial }],
   ['o_init', { symbol: 'ᡆ‍', translit: 'o', position: symbolPosition.initial }],
+  ['ü_fin', { symbol: '‍ᡉ', translit: 'ü', position: symbolPosition.final }],
 ])
 
 export const phrase = [
@@ -75,7 +77,7 @@ export function useCanvasController({ canvasElementRef }: useCanvasControllerPro
         const json = await response.json()
         const { result } = json
 
-        if (result > 0.95) {
+        if (result > 0.975) {
           setSymbolIndex((prev) => {
             if ((prev == null) || (prev == symbolEntries.length-1)) {
               return 0
