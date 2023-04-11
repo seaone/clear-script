@@ -5,7 +5,13 @@ import { phrase, useCanvasController } from "./use-canvas-controller"
 
 export function Canvas() {
   const canvasElementRef = useRef<null | HTMLCanvasElement>(null)
-  const { isLoading, message, randomSymbol, handleClearClick, handleCheckClick } = useCanvasController({ canvasElementRef })
+  const {
+    isLoading,
+    message,
+    randomSymbol,
+    handleClearClick,
+    handleCheckClick
+  } = useCanvasController({ canvasElementRef })
   const symbolBackgroundImageUrl = randomSymbol?.[0] ? `url(/images/${randomSymbol[0]}.svg` : 'null'
 
   return (
@@ -31,9 +37,22 @@ export function Canvas() {
       </div>
 
       <div className={styles.buttons}>
-        <button className={`${styles.button} ${styles.buttonWarning}`} type="button" onClick={handleClearClick}>Clear</button>
+        <button
+          className={`${styles.button} ${styles.buttonWarning}`}
+          disabled={isLoading}
+          type="button"
+          onClick={handleClearClick}
+        >
+          Clear
+        </button>
 
-        <button className={`${styles.button} ${styles.buttonAction}`} disabled={isLoading} type="button" onClick={handleCheckClick}>Check</button>
+        <button
+          className={`${styles.button} ${styles.buttonAction}`} disabled={isLoading}
+          type="button"
+          onClick={handleCheckClick}
+        >
+          Check
+        </button>
       </div>
 
       {message != '' && (
